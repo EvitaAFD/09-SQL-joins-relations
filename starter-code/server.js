@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 // DONE: Don't forget to set your own conString if required by your system
 const conString = 'postgres://localhost:5432';
-// DONE:  This uses the client object to connect to our database and assigns it to the variable client.
+// DONE:  This uses the client object to connect to our database and assigns it to the variable called client that is constant (immutable). Assinging object that is new instance of the library 'pg' that will facicilitate our communications and data transfer between server (controller) and the database(model).  The conString specifies the port over which this exchange between the controller and the model.
 const client = new pg.Client(conString);
 client.connect();
 
@@ -31,7 +31,7 @@ app.get('/new', function(request, response) {
 app.get('/articles', function(request, response) {
   // REVIEW: We now have two queries which create separate tables in our DB, and reference the authors in our articles.
   // DONE: What number in the full-stack diagram best matches what is happening in lines 35-42?
-  // Put your response here... #3
+  // Put your response here... #3 - the controller sends a SQL query to the model
   client.query(`
     CREATE TABLE IF NOT EXISTS
     authors (
@@ -52,10 +52,10 @@ app.get('/articles', function(request, response) {
     );`
   ) // DONE: Referring to lines 45-52, answer the following questions:
     // What is a primary key?
-    // Put your response here...These tables share the article_id, a primary key is needed to identify that entity uniquely across these two tables
+    // Put your response here...A primary key is a unique identifier needed to identify that entity across these two tables in this case artcile-id
     // +++++++++++++++++++++
     // What does VARCHAR mean?
-    // Put your response here...Specifies a maximum length of character string, variable length allowed
+    // Put your response here...String data type in SQL-Can specify a maximum length of character string, variable length allowed
     // +++++++++++++++++++++
   // REVIEW: This query will join the data together from our tables and send it back to the client.
   client.query(`
@@ -70,7 +70,7 @@ app.get('/articles', function(request, response) {
 });
 
 // DONE: How is a 'post' route different than a 'get' route?
-// Put your answer here... 'post' submits the data and 'get' requests the data
+// Put your answer here... 'post' creates new data and 'get' retrieves the data
 app.post('/articles', function(request, response) {
   client.query(
     'INSERT INTO authors(author, "authorUrl") VALUES($1, $2) ON CONFLICT DO NOTHING', // DONE: Write a SQL query to insert a new author, ON CONFLICT DO NOTHING
@@ -84,7 +84,7 @@ app.post('/articles', function(request, response) {
   function queryTwo() {
     client.query(
       // DONE: What is the purpose of the $1 in the following line of code?
-      // Put your response here...$1 serves as an access point in the template literal into the 1st place in brackets, accessing first item of data
+      // Put your response here...$1 serves as a placeholder for the author's name which is the first position of the array
       `SELECT author_id FROM authors WHERE author=$1`, // DONE: Write a SQL query to retrieve the author_id from the authors table for the new article
       [request.body.author], // DONE: Add the author name as data for the SQL query
       function(err, result) {
@@ -96,7 +96,7 @@ app.post('/articles', function(request, response) {
 
   function queryThree(author_id) {
       // DONE: What number in the full-stack diagram best matches what is happening in line 100?
-      // #3
+      // #3 the controller is dispatching a query to the model
     client.query(
       `INSERT INTO
       articles(author_id, title, category, "publishedOn", body)
@@ -110,7 +110,7 @@ app.post('/articles', function(request, response) {
       ], // DONE: Add the data from our new article, including the author_id, as data for the SQL query.
       function(err) {
         if (err) console.error(err);
-        // DONE: What number in the full-stack diagram best matches what is happening in line 114? #5 it is giving you feedback
+        // DONE: What number in the full-stack diagram best matches what is happening in line 114? #5 the (controller) server is giving information back to the view
         response.send('insert complete');
       }
     );
@@ -130,7 +130,7 @@ app.put('/articles/:id', function(request, response) {
 
   function queryTwo(author_id) {
     client.query(
-      // DONE: In a sentence or two, describe how a SQL 'UPDATE' is different from an 'INSERT', and identify which REST verbs and which CRUD components align with them. 'UPDATE'allows you to update an existing article this correlates with update in CRUD and 'put' in REST. 'INSERT' a new record which correlates with create in CRUD and 'post' in REST.
+      // DONE: In a sentence or two, describe how a SQL 'UPDATE' is different from an 'INSERT', and identify which REST verbs and which CRUD components align with them. 'UPDATE'allows you to modify/patch an existing article this correlates with update in CRUD and 'put' in REST. 'INSERT' allows you to create a new record which correlates with create in CRUD and 'post' in REST.
       `UPDATE authors
       SET author=$1, "authorUrl"=$2
       WHERE author_id=$3;`, // DONE: Write a SQL query to update an existing author record
@@ -159,13 +159,13 @@ app.put('/articles/:id', function(request, response) {
   }
 });
 
-  // DONE: What number in the full-stack diagram best matches what is happening in line 163? #2
+  // DONE: What number in the full-stack diagram best matches what is happening in line 163? #2- a request from the view(an event) is directed to the appropriate route in the server
 app.delete('/articles/:id', function(request, response) {
-    // DONE: What number in the full-stack diagram best matches what is happening in lines 165? #3
+    // DONE: What number in the full-stack diagram best matches what is happening in lines 165? #3- the controller communicating with model
   client.query(
     `DELETE FROM articles WHERE article_id=$1;`,
     // DONE: What does the value in 'request.params.id' come from? If unsure, look in the Express docs.
-    // Put your response here...The request object represents the HTTP request and holds the property for the request query string of article_id
+    // Put your response here...It comes from the ':id:' in the URL of the AJAX request and in this case was sent out by Article.prototype.deleteRecord(), and becomes the $1 that is sent off to the database
     [request.params.id]
   );
   // DONE: What number in the full-stack diagram best matches what is happening in line 171? #5
